@@ -2,6 +2,7 @@ import org.scalajs.linker.interface.ModuleInitializer
 import org.scalajs.linker.interface.ModuleSplitStyle
 
 enablePlugins(ScalaJSPlugin)
+enablePlugins(ElectronPlugin)
 
 name := "scalajs-electron-quick-start"
 scalaVersion := "2.13.8"
