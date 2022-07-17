@@ -6,6 +6,7 @@ import quickstart.facade.electron.ElectronGlobals.app
 import quickstart.facade.electron.WebPreferences
 import quickstart.facade.node.NodeGlobals.__dirname
 import quickstart.facade.node.NodeGlobals.process
+import quickstart.facade.node.Path
 
 import scala.scalajs.js
 import scala.scalajs.js.|
@@ -17,8 +18,7 @@ object Main extends App {
       override val height = 600
       override val width = 800
       override val webPreferences = new WebPreferences {
-        override val preload =
-          s"${__dirname}\\preload.js"
+        override val preload = Path.join(__dirname, "preload.js")
       }
     })
     mainWindow.loadFile("index.html")
