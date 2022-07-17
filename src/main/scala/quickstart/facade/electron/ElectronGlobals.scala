@@ -1,11 +1,11 @@
-package quickstart
+package quickstart.facade.electron
 
 import quickstart.facade.node.EventEmitter
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
-object Electron {
+object ElectronGlobals {
   @js.native
   @JSImport("electron", "app")
   def app: Application = js.native

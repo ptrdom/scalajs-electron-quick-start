@@ -2,7 +2,7 @@
   "name": "electron-quick-start",
   "version": "1.0.0",
   "description": "A minimal Electron application",
-  "main": "target/scala-2.13/scala-js-tutorial-fastopt/main.js",
+  "main": "target/scala-2.13/scalajs-electron-quick-start-fastopt/main.js",
   "scripts": {
     "start": "electron ."
   },

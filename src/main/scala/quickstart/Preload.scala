@@ -7,6 +7,9 @@ import quickstart.facade.node.NodeGlobals.process
 
 import scala.scalajs.js
 
+/** All of the Node.js APIs are available in the preload process.
+  * It has the same sandbox as a Chrome extension.
+  */
 object Preload extends App {
   window.addEventListener(
     "DOMContentLoaded",

@@ -15,6 +15,10 @@ scalaJSModuleInitializers +=
   ModuleInitializer
     .mainMethodWithArgs("quickstart.Preload", "main")
     .withModuleID("preload")
+scalaJSModuleInitializers +=
+  ModuleInitializer
+    .mainMethodWithArgs("quickstart.Renderer", "main")
+    .withModuleID("renderer")
 
 // Suppress meaningless 'multiple main classes detected' warning
 Compile / mainClass := None

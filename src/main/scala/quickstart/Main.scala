@@ -1,6 +1,9 @@
 package quickstart
 
-import quickstart.Electron.app
+import quickstart.facade.electron.BrowserWindow
+import quickstart.facade.electron.BrowserWindowConfig
+import quickstart.facade.electron.ElectronGlobals.app
+import quickstart.facade.electron.WebPreferences
 import quickstart.facade.node.NodeGlobals.__dirname
 import quickstart.facade.node.NodeGlobals.process
 
@@ -19,7 +22,7 @@ object Main extends App {
       }
     })
     mainWindow.loadFile("index.html")
-//    mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools()
   }
 
   app
