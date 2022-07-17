@@ -1,4 +1,4 @@
-package tutorial.webapp.facade.node
+package quickstart.facade.node
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport

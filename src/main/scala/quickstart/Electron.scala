@@ -1,6 +1,6 @@
-package tutorial.webapp
+package quickstart
 
-import tutorial.webapp.facade.node.EventEmitter
+import quickstart.facade.node.EventEmitter
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport

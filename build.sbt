@@ -10,12 +10,12 @@ scalaVersion := "2.13.8"
 scalaJSUseMainModuleInitializer := false
 scalaJSModuleInitializers +=
   ModuleInitializer
-    .mainMethod("tutorial.webapp.AppWindow", "main")
-    .withModuleID("AppWindow")
+    .mainMethodWithArgs("quickstart.Main", "main")
+    .withModuleID("main")
 scalaJSModuleInitializers +=
   ModuleInitializer
-    .mainMethod("tutorial.webapp.TutorialApp", "main")
-    .withModuleID("TutorialApp")
+    .mainMethodWithArgs("quickstart.Preload", "main")
+    .withModuleID("preload")
 
 libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.2.0"
 libraryDependencies += "org.scala-js" %%% "scala-js-macrotask-executor" % "1.0.0"
@@ -31,7 +31,7 @@ testFrameworks += new TestFramework("utest.runner.Framework")
 fastOptJS / scalaJSLinkerConfig ~= {
   _.withModuleKind(ModuleKind.CommonJSModule)
     .withModuleSplitStyle(
-      ModuleSplitStyle.SmallModulesFor(List("tutorial.webapp"))
+      ModuleSplitStyle.SmallModulesFor(List("quickstart"))
     )
 }
 
