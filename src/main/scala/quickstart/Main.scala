@@ -1,11 +1,11 @@
 package quickstart
 
-import org.scalajs.macrotaskexecutor.MacrotaskExecutor.Implicits._
 import quickstart.Electron.app
 import quickstart.facade.node.NodeGlobals.__dirname
 import quickstart.facade.node.NodeGlobals.process
 
-import scala.scalajs.js.Thenable.Implicits._
+import scala.scalajs.js
+import scala.scalajs.js.|
 
 object Main extends App {
 
@@ -24,7 +24,7 @@ object Main extends App {
 
   app
     .whenReady()
-    .foreach { _ =>
+    .`then`((_ => {
       createWindow()
       app.on(
         "activate",
@@ -32,7 +32,7 @@ object Main extends App {
           if (BrowserWindow.getAllWindows().length == 0) createWindow()
         }
       )
-    }
+    }): js.Function1[Unit, Unit | js.Thenable[Unit]])
   app.on(
     "window-all-close",
     () => {

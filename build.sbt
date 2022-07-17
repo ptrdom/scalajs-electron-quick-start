@@ -3,11 +3,10 @@ import org.scalajs.linker.interface.ModuleSplitStyle
 
 enablePlugins(ScalaJSPlugin)
 
-name := "Scala.js Tutorial"
+name := "scalajs-electron-quick-start"
 scalaVersion := "2.13.8"
 
-// This is an application with a main method
-scalaJSUseMainModuleInitializer := false
+// Main classes for Electron processes
 scalaJSModuleInitializers +=
   ModuleInitializer
     .mainMethodWithArgs("quickstart.Main", "main")
@@ -17,16 +16,10 @@ scalaJSModuleInitializers +=
     .mainMethodWithArgs("quickstart.Preload", "main")
     .withModuleID("preload")
 
+// Suppress meaningless 'multiple main classes detected' warning
+Compile / mainClass := None
+
 libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.2.0"
-libraryDependencies += "org.scala-js" %%% "scala-js-macrotask-executor" % "1.0.0"
-
-// Add support for the DOM in `run` and `test`
-//TODO use selenium env for tests
-//jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
-
-// uTest settings
-libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.4" % "test"
-testFrameworks += new TestFramework("utest.runner.Framework")
 
 fastOptJS / scalaJSLinkerConfig ~= {
   _.withModuleKind(ModuleKind.CommonJSModule)
@@ -38,3 +31,5 @@ fastOptJS / scalaJSLinkerConfig ~= {
 fullOptJS / scalaJSLinkerConfig ~= {
   _.withModuleKind(ModuleKind.CommonJSModule)
 }
+
+//TODO setup tests https://www.electronjs.org/docs/latest/tutorial/automated-testing
