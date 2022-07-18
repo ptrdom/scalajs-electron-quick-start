@@ -25,15 +25,16 @@ Compile / mainClass := None
 
 libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.2.0"
 
-fastOptJS / scalaJSLinkerConfig ~= {
+Compile / fastLinkJS / scalaJSLinkerConfig ~= {
   _.withModuleKind(ModuleKind.CommonJSModule)
     .withModuleSplitStyle(
       ModuleSplitStyle.SmallModulesFor(List("quickstart"))
     )
 }
 
-fullOptJS / scalaJSLinkerConfig ~= {
+Compile / fullLinkJS / scalaJSLinkerConfig ~= {
   _.withModuleKind(ModuleKind.CommonJSModule)
+    .withClosureCompiler(false)
 }
 
 //TODO setup tests https://www.electronjs.org/docs/latest/tutorial/automated-testing
