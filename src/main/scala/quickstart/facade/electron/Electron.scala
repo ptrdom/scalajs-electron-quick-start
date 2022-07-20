@@ -30,6 +30,7 @@ trait BrowserWindowConfig extends js.Object {
 }
 trait WebPreferences extends js.Object {
   val preload: js.UndefOr[String] = js.undefined
+  val nodeIntegration: js.UndefOr[Boolean] = js.undefined
 }
 trait WebContents extends js.Object {
   def openDevTools(): Unit
