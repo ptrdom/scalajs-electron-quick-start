@@ -10,6 +10,8 @@ import org.scalajs.sbtplugin.Stage
 import scala.collection.immutable.ListSet
 import scala.sys.process.Process
 
+//TODO split off the renderer to separate project
+//TODO either do plugin work in root module or separate module that only does gluing
 object ElectronPlugin extends AutoPlugin {
 
   override lazy val requires = ScalaJSPlugin

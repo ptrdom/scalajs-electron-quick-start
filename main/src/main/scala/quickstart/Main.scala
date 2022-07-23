@@ -22,7 +22,7 @@ object Main extends App {
       }
     })
     mainWindow.loadFile("index.html")
-    mainWindow.webContents.openDevTools()
+//    mainWindow.webContents.openDevTools()
   }
 
   app
