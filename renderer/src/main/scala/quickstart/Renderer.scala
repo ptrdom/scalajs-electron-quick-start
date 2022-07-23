@@ -7,6 +7,4 @@ package quickstart
   * selectively enable features needed in the rendering
   * process.
   */
-object Renderer extends App {
-  println("potato")
-}
+object Renderer extends App {}
