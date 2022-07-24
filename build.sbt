@@ -1,20 +1,35 @@
+import ElectronSplitPlugin.autoImport.mainProject
+import ElectronSplitPlugin.autoImport.rendererProject
 import org.scalajs.linker.interface.ModuleInitializer
 import org.scalajs.linker.interface.ModuleSplitStyle
+import org.scalajs.sbtplugin.Stage.FullOpt
 
 name := "scalajs-electron-quick-start"
 
 lazy val `scalajs-electron-quick-start` = (project in file("."))
-  .aggregate(main, renderer)
+  .aggregate(app, main, renderer)
 
 def commonSettings = Seq(
-  scalaVersion := "2.13.8",
+  scalaVersion := "2.13.8"
+)
+
+def commonScalajsSettings = Seq(
   libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.2.0"
 )
 
+val app = (project in file("app"))
+  .enablePlugins(ElectronSplitPlugin)
+  .settings(
+    commonSettings,
+    mainProject := main,
+    rendererProject := renderer
+  )
+
 lazy val main = (project in file("main"))
   .enablePlugins(ScalaJSPlugin)
-  .settings(commonSettings)
   .settings(
+    commonSettings,
+    commonScalajsSettings,
     scalaJSModuleInitializers := Seq(
       ModuleInitializer
         .mainMethodWithArgs("quickstart.Main", "main")
@@ -39,8 +54,9 @@ lazy val main = (project in file("main"))
 
 lazy val renderer = (project in file("renderer"))
   .enablePlugins(ScalaJSPlugin)
-  .settings(commonSettings)
   .settings(
+    commonSettings,
+    commonScalajsSettings,
     scalaJSModuleInitializers := Seq(
       ModuleInitializer
         .mainMethodWithArgs("quickstart.Renderer", "main")
