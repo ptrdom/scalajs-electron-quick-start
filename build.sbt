@@ -1,5 +1,3 @@
-import ElectronSplitPlugin.autoImport.mainProject
-import ElectronSplitPlugin.autoImport.rendererProject
 import org.scalajs.linker.interface.ModuleInitializer
 import org.scalajs.linker.interface.ModuleSplitStyle
 import org.scalajs.sbtplugin.Stage.FullOpt
@@ -18,7 +16,7 @@ def commonScalajsSettings = Seq(
 )
 
 val app = (project in file("app"))
-  .enablePlugins(ElectronSplitPlugin)
+  .enablePlugins(ElectronPlugin)
   .settings(
     commonSettings,
     mainProject := main,
@@ -63,5 +61,3 @@ lazy val renderer = (project in file("renderer"))
         .withModuleID("renderer")
     )
   )
-
-//TODO setup tests https://www.electronjs.org/docs/latest/tutorial/automated-testing
