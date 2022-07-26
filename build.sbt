@@ -1,6 +1,5 @@
 import org.scalajs.linker.interface.ModuleInitializer
 import org.scalajs.linker.interface.ModuleSplitStyle
-import org.scalajs.sbtplugin.Stage.FullOpt
 
 name := "scalajs-electron-quick-start"
 
