@@ -21,7 +21,8 @@ import scala.sys.process.ProcessIO
 object ElectronPlugin extends AutoPlugin {
 
   object autoImport {
-    val mainProject = settingKey[Project]("Project for main and preload.")
+    val mainProject = settingKey[Project]("Project for main.")
+    val preloadProject = settingKey[Project]("Project for preload.")
     val rendererProject = settingKey[Project]("Project for renderer.")
 
     val electronInstall: TaskKey[Unit] =
@@ -46,6 +47,7 @@ object ElectronPlugin extends AutoPlugin {
     lazy val filter = ScopeFilter(
       inProjects(
         projectToRef(mainProject.value),
+        projectToRef(preloadProject.value),
         projectToRef(rendererProject.value)
       ),
       inConfigurations(Compile)

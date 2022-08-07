@@ -10,20 +10,25 @@ Run `sbt app/electronStart`.
 
 ## Design
 
-The application is split into three `sbt` modules:
-
+The application is split into five `sbt` modules to fit a project structure that works well with Scala.js and the
+[security guidelines](https://www.electronjs.org/docs/latest/tutorial/security) outlined in Electron documentation:
+ 
 - `app`
-  - Combines Scala.js output of `main` and `renderer` modules with additional resources into an Electron application.
+  - Combines Scala.js output of other modules with additional resources into an Electron application.
   - Implements a simple Electron `sbt` plugin with following tasks:
     - `app/electronInstall` - copies over resources (`index.html`, `package.json`, `package-lock.json`, `styles.css`) 
       to target directory and runs `npm install`.
-    - `app/electronCompile` - compiles `main` and `renderer` modules, copies output to target directory.
+    - `app/electronCompile` - compiles Scala.js modules, copies output to target directory.
     - `app/electronStart` - runs `npm start` on target directory.
 - `main`
-  - Contains `main` process of the Electron Process Model. Produces two Scala.js entry points -
-  `main.js` and `preload.js`.
-  - Because entry points can use `Node.js` APIs, `CommonJS` modules are used
-  to share common code.
+  - Contains `main` process of the [Electron Process Model](https://www.electronjs.org/docs/latest/tutorial/process-model).
+  - Can use `Node.js` APIs and `CommonJS` modules.
+- `preload`
+  - Contains `preload` script.
+  - Can use a [polyfilled subset](https://www.electronjs.org/docs/latest/tutorial/sandbox#preload-scripts) of `Node.js`
+    APIs, so it does use `CommonJS` modules, but can only `require` a subset of them.
+- `node-shared`
+  - Contains Scala.js facades that can be shared between `main` and `preload` modules.
 - `renderer`
   - Contains `renderer` process of the Electron Process Model. 
   - Because it used for producing 
