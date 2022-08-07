@@ -35,7 +35,7 @@ The application is split into five `sbt` modules to fit a project structure that
   web content and browsers do not have built-in support `CommonJS` modules, it is built separately
   as a single bundle.
 
-`scalaJSStage` setting in `main` and `renderer` modules can be used to toggle between `FastLinkJS` and `FullLinkJS` output.
+`scalaJSStage` setting in `main`, `preload` and `renderer` modules can be used to toggle between `FastLinkJS` and `FullLinkJS` output.
 
 ## License
 
