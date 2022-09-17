@@ -1,5 +1,3 @@
-import java.io.InputStream
-
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.fastLinkJS
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.fullLinkJS
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.scalaJSLinkerOutputDirectory
@@ -13,10 +11,12 @@ import sbt.Keys._
 import sbt.Project.projectToRef
 import sbt._
 import sbt.internal.util.ManagedLogger
+import sbt.nio.Keys.watchBeforeCommand
+import sbt.nio.Keys.watchOnTermination
 
 import scala.collection.immutable.ListSet
 import scala.sys.process.Process
-import scala.sys.process.ProcessIO
+import scala.sys.process.ProcessLogger
 
 object ElectronPlugin extends AutoPlugin {
 
@@ -34,6 +34,7 @@ object ElectronPlugin extends AutoPlugin {
         "Compiles main and renderer modules, copies output to target directory."
       )
     val electronStart = taskKey[Unit]("Runs `npm start` on target directory.")
+    val electronStop = taskKey[Unit]("Runs `npm start` on target directory.")
   }
 
   import autoImport._
@@ -77,25 +78,10 @@ object ElectronPlugin extends AutoPlugin {
       }
     }
 
-  private def eagerIO(log: ManagedLogger) = {
-    val toInfoLog = (is: InputStream) => {
-      scala.io.Source
-        .fromInputStream(is)
-        .getLines
-        .foreach(msg => log.info(msg))
-      is.close()
-    }
-    val toErrorLog = (is: InputStream) => {
-      scala.io.Source
-        .fromInputStream(is)
-        .getLines
-        .foreach(msg => log.error(msg))
-      is.close()
-    }
-    new ProcessIO(
-      _.close(),
-      toInfoLog,
-      toErrorLog
+  private def eagerLogger(log: ManagedLogger) = {
+    ProcessLogger(
+      out => log.info(out),
+      err => log.error(err)
     )
   }
 
@@ -127,7 +113,7 @@ object ElectronPlugin extends AutoPlugin {
           .foreach(file => IO.copyFile(file, targetDir / file.getName))
 
         Process(cmd("npm") ::: "install" :: Nil, targetDir)
-          .run(eagerIO(s.log))
+          .run(eagerLogger(s.log))
           .exitValue()
 
         IO.copyFile(targetDir / lockFile, baseDirectory.value / lockFile)
@@ -153,17 +139,37 @@ object ElectronPlugin extends AutoPlugin {
           .foreach(file => IO.copyFile(file, targetDir / file.name))
       }
     },
-    (Compile / compile) := ((Compile / compile) dependsOn electronCompile).value,
-    electronStart := {
-      electronCompile.value
+    (Compile / compile) := ((Compile / compile) dependsOn electronCompile).value
+  ) ++ {
+    var watch: Boolean = false
+    var process: Option[Process] = None
+    Seq(
+      electronStart / watchBeforeCommand := { () =>
+        {
+          watch = true
+        }
+      },
+      electronStart := {
+        electronCompile.value
 
-      val s = streams.value
+        val s = streams.value
 
-      val targetDir = (electronInstall / crossTarget).value
+        val targetDir = (electronInstall / crossTarget).value
 
-      Process(cmd("npm") ::: "start" :: Nil, targetDir)
-        .run(eagerIO(s.log))
-        .exitValue()
-    }
-  )
+        val p = Process(cmd("npm") ::: "start" :: Nil, targetDir)
+          .run(eagerLogger(s.log))
+        if (watch) {
+          process = Some(p)
+        } else {
+          p.exitValue()
+        }
+      },
+      electronStart / watchOnTermination := { (_, _, _, s) =>
+        //TODO does not work, JDK 9 process children API should fix it
+        process.foreach(_.destroy())
+        watch = false
+        s
+      }
+    )
+  }
 }
