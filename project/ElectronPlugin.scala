@@ -15,7 +15,7 @@ import sbt.nio.Keys.watchBeforeCommand
 import sbt.nio.Keys.watchOnTermination
 
 import scala.collection.immutable.ListSet
-import scala.sys.process.Process
+import scala.sys.process.{Process => ScalaProcess}
 import scala.sys.process.ProcessLogger
 
 object ElectronPlugin extends AutoPlugin {
@@ -112,7 +112,7 @@ object ElectronPlugin extends AutoPlugin {
           .filter(_.exists())
           .foreach(file => IO.copyFile(file, targetDir / file.getName))
 
-        Process(cmd("npm") ::: "install" :: Nil, targetDir)
+        ScalaProcess(cmd("npm") ::: "install" :: Nil, targetDir)
           .run(eagerLogger(s.log))
           .exitValue()
 
@@ -156,17 +156,25 @@ object ElectronPlugin extends AutoPlugin {
 
         val targetDir = (electronInstall / crossTarget).value
 
-        val p = Process(cmd("npm") ::: "start" :: Nil, targetDir)
-          .run(eagerLogger(s.log))
         if (watch) {
-          process = Some(p)
+          val pb = new ProcessBuilder(cmd("npm") ::: "start" :: Nil: _*)
+          pb.directory(targetDir)
+          //TODO look into ways to connect stdout and stderr to logging
+          process = Some(pb.start())
         } else {
-          p.exitValue()
+          ScalaProcess(cmd("npm") ::: "start" :: Nil, targetDir)
+            .run(eagerLogger(s.log))
+            .exitValue()
         }
       },
       electronStart / watchOnTermination := { (_, _, _, s) =>
-        //TODO does not work, JDK 9 process children API should fix it
-        process.foreach(_.destroy())
+        process.foreach { process =>
+          //TODO consider using reflection to keep JDK 8 compatibility
+          process
+            .descendants() // requires JDK 9+
+            .forEach(process => process.destroy())
+          process.destroy()
+        }
         watch = false
         s
       }
