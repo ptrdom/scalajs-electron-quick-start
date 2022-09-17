@@ -15,6 +15,8 @@ import sbt.nio.Keys.watchBeforeCommand
 import sbt.nio.Keys.watchOnTermination
 
 import scala.collection.immutable.ListSet
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.sys.process.{Process => ScalaProcess}
 import scala.sys.process.ProcessLogger
 
@@ -143,6 +145,15 @@ object ElectronPlugin extends AutoPlugin {
   ) ++ {
     var watch: Boolean = false
     var process: Option[Process] = None
+    def terminateProcess() = {
+      process.foreach { process =>
+        //TODO consider using reflection to keep JDK 8 compatibility
+        process
+          .descendants() // requires JDK 9+
+          .forEach(process => process.destroy())
+        process.destroy()
+      }
+    }
     Seq(
       electronStart / watchBeforeCommand := { () =>
         {
@@ -152,29 +163,39 @@ object ElectronPlugin extends AutoPlugin {
       electronStart := {
         electronCompile.value
 
-        val s = streams.value
+        val logger = state.value.globalLogging.full
 
         val targetDir = (electronInstall / crossTarget).value
 
         if (watch) {
+          terminateProcess()
           val pb = new ProcessBuilder(cmd("npm") ::: "start" :: Nil: _*)
           pb.directory(targetDir)
-          //TODO look into ways to connect stdout and stderr to logging
-          process = Some(pb.start())
+          val p = pb.start()
+          //TODO rework futures to threads for interruption support
+          Future {
+            scala.io.Source
+              .fromInputStream(p.getInputStream)
+              .getLines
+              .foreach(msg => logger.info(msg))
+            println("stdout done")
+          }
+          Future {
+            scala.io.Source
+              .fromInputStream(p.getErrorStream)
+              .getLines
+              .foreach(msg => logger.error(msg))
+            println("stderr done")
+          }
+          process = Some(p)
         } else {
           ScalaProcess(cmd("npm") ::: "start" :: Nil, targetDir)
-            .run(eagerLogger(s.log))
+            .run(eagerLogger(logger))
             .exitValue()
         }
       },
       electronStart / watchOnTermination := { (_, _, _, s) =>
-        process.foreach { process =>
-          //TODO consider using reflection to keep JDK 8 compatibility
-          process
-            .descendants() // requires JDK 9+
-            .forEach(process => process.destroy())
-          process.destroy()
-        }
+        terminateProcess()
         watch = false
         s
       }
