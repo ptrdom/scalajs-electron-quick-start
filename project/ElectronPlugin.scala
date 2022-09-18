@@ -1,5 +1,3 @@
-import java.io.InputStream
-
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.fastLinkJS
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.fullLinkJS
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.scalaJSLinkerOutputDirectory
@@ -13,10 +11,14 @@ import sbt.Keys._
 import sbt.Project.projectToRef
 import sbt._
 import sbt.internal.util.ManagedLogger
+import sbt.nio.Keys.watchBeforeCommand
+import sbt.nio.Keys.watchOnTermination
 
 import scala.collection.immutable.ListSet
-import scala.sys.process.Process
-import scala.sys.process.ProcessIO
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.sys.process.{Process => ScalaProcess}
+import scala.sys.process.ProcessLogger
 
 object ElectronPlugin extends AutoPlugin {
 
@@ -34,6 +36,7 @@ object ElectronPlugin extends AutoPlugin {
         "Compiles main and renderer modules, copies output to target directory."
       )
     val electronStart = taskKey[Unit]("Runs `npm start` on target directory.")
+    val electronStop = taskKey[Unit]("Runs `npm start` on target directory.")
   }
 
   import autoImport._
@@ -77,27 +80,18 @@ object ElectronPlugin extends AutoPlugin {
       }
     }
 
-  private def eagerIO(log: ManagedLogger) = {
-    val toInfoLog = (is: InputStream) => {
-      scala.io.Source
-        .fromInputStream(is)
-        .getLines
-        .foreach(msg => log.info(msg))
-      is.close()
-    }
-    val toErrorLog = (is: InputStream) => {
-      scala.io.Source
-        .fromInputStream(is)
-        .getLines
-        .foreach(msg => log.error(msg))
-      is.close()
-    }
-    new ProcessIO(
-      _.close(),
-      toInfoLog,
-      toErrorLog
+  private def eagerLogger(log: ManagedLogger) = {
+    ProcessLogger(
+      out => log.info(out),
+      err => log.error(err)
     )
   }
+
+  private class ProcessWrapper(
+      val process: Process,
+      val stdoutThread: Thread,
+      val stderrThread: Thread
+  )
 
   override lazy val projectSettings: Seq[Setting[_]] =
     inConfig(Compile)(perConfigSettings) ++
@@ -126,8 +120,8 @@ object ElectronPlugin extends AutoPlugin {
           .filter(_.exists())
           .foreach(file => IO.copyFile(file, targetDir / file.getName))
 
-        Process(cmd("npm") ::: "install" :: Nil, targetDir)
-          .run(eagerIO(s.log))
+        ScalaProcess(cmd("npm") ::: "install" :: Nil, targetDir)
+          .run(eagerLogger(s.log))
           .exitValue()
 
         IO.copyFile(targetDir / lockFile, baseDirectory.value / lockFile)
@@ -153,17 +147,71 @@ object ElectronPlugin extends AutoPlugin {
           .foreach(file => IO.copyFile(file, targetDir / file.name))
       }
     },
-    (Compile / compile) := ((Compile / compile) dependsOn electronCompile).value,
-    electronStart := {
-      electronCompile.value
-
-      val s = streams.value
-
-      val targetDir = (electronInstall / crossTarget).value
-
-      Process(cmd("npm") ::: "start" :: Nil, targetDir)
-        .run(eagerIO(s.log))
-        .exitValue()
+    (Compile / compile) := ((Compile / compile) dependsOn electronCompile).value
+  ) ++ {
+    var watch: Boolean = false
+    var processWrapper: Option[ProcessWrapper] = None
+    def terminateProcess() = {
+      processWrapper.foreach { processWrapper =>
+        processWrapper.stdoutThread.interrupt()
+        processWrapper.stderrThread.interrupt()
+        //TODO consider using reflection to keep JDK 8 compatibility
+        processWrapper.process
+          .descendants() // requires JDK 9+
+          .forEach(process => process.destroy())
+        processWrapper.process.destroy()
+      }
     }
-  )
+    Seq(
+      electronStart / watchBeforeCommand := { () =>
+        {
+          watch = true
+        }
+      },
+      electronStart := {
+        electronCompile.value
+
+        val logger = state.value.globalLogging.full
+
+        val targetDir = (electronInstall / crossTarget).value
+
+        if (watch) {
+          terminateProcess()
+          //using Java Process to use `descendants`
+          val pb = new ProcessBuilder(cmd("npm") ::: "start" :: Nil: _*)
+          pb.directory(targetDir)
+          val p = pb.start()
+          val stdoutThread = new Thread() {
+            override def run(): Unit = {
+              scala.io.Source
+                .fromInputStream(p.getInputStream)
+                .getLines
+                .foreach(msg => logger.info(msg))
+            }
+          }
+          stdoutThread.start()
+          val stderrThread = new Thread() {
+            override def run(): Unit = {
+              scala.io.Source
+                .fromInputStream(p.getErrorStream)
+                .getLines
+                .foreach(msg => logger.error(msg))
+            }
+          }
+          stderrThread.start()
+          processWrapper =
+            Some(new ProcessWrapper(p, stdoutThread, stderrThread))
+        } else {
+          ScalaProcess(cmd("npm") ::: "start" :: Nil, targetDir)
+            .run(eagerLogger(logger))
+            .exitValue()
+        }
+      },
+      electronStart / watchOnTermination := { (_, _, _, s) =>
+        terminateProcess()
+        watch = false
+        s
+      }
+    )
+  }
 }
