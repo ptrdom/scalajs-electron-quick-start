@@ -1,6 +1,5 @@
 import org.scalajs.linker.interface.ModuleInitializer
 import org.scalajs.linker.interface.ModuleSplitStyle
-import org.scalajs.sbtplugin.Stage.FullOpt
 
 name := "scalajs-electron-quick-start"
 
@@ -14,8 +13,6 @@ def commonSettings = Seq(
 def commonDomSettings = Seq(
   libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.2.0"
 )
-
-ThisBuild / scalaJSStage := FullOpt
 
 val app = (project in file("app"))
   .enablePlugins(ElectronPlugin)
