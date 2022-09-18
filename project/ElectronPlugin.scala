@@ -87,6 +87,12 @@ object ElectronPlugin extends AutoPlugin {
     )
   }
 
+  private class ProcessWrapper(
+      val process: Process,
+      val stdoutThread: Thread,
+      val stderrThread: Thread
+  )
+
   override lazy val projectSettings: Seq[Setting[_]] =
     inConfig(Compile)(perConfigSettings) ++
       inConfig(Test)(perConfigSettings)
@@ -144,14 +150,16 @@ object ElectronPlugin extends AutoPlugin {
     (Compile / compile) := ((Compile / compile) dependsOn electronCompile).value
   ) ++ {
     var watch: Boolean = false
-    var process: Option[Process] = None
+    var processWrapper: Option[ProcessWrapper] = None
     def terminateProcess() = {
-      process.foreach { process =>
+      processWrapper.foreach { processWrapper =>
+        processWrapper.stdoutThread.interrupt()
+        processWrapper.stderrThread.interrupt()
         //TODO consider using reflection to keep JDK 8 compatibility
-        process
+        processWrapper.process
           .descendants() // requires JDK 9+
           .forEach(process => process.destroy())
-        process.destroy()
+        processWrapper.process.destroy()
       }
     }
     Seq(
@@ -169,25 +177,30 @@ object ElectronPlugin extends AutoPlugin {
 
         if (watch) {
           terminateProcess()
+          //using Java Process to use `descendants`
           val pb = new ProcessBuilder(cmd("npm") ::: "start" :: Nil: _*)
           pb.directory(targetDir)
           val p = pb.start()
-          //TODO rework futures to threads for interruption support
-          Future {
-            scala.io.Source
-              .fromInputStream(p.getInputStream)
-              .getLines
-              .foreach(msg => logger.info(msg))
-            println("stdout done")
+          val stdoutThread = new Thread() {
+            override def run(): Unit = {
+              scala.io.Source
+                .fromInputStream(p.getInputStream)
+                .getLines
+                .foreach(msg => logger.info(msg))
+            }
           }
-          Future {
-            scala.io.Source
-              .fromInputStream(p.getErrorStream)
-              .getLines
-              .foreach(msg => logger.error(msg))
-            println("stderr done")
+          stdoutThread.start()
+          val stderrThread = new Thread() {
+            override def run(): Unit = {
+              scala.io.Source
+                .fromInputStream(p.getErrorStream)
+                .getLines
+                .foreach(msg => logger.error(msg))
+            }
           }
-          process = Some(p)
+          stderrThread.start()
+          processWrapper =
+            Some(new ProcessWrapper(p, stdoutThread, stderrThread))
         } else {
           ScalaProcess(cmd("npm") ::: "start" :: Nil, targetDir)
             .run(eagerLogger(logger))
