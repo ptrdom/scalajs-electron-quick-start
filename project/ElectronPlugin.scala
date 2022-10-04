@@ -15,10 +15,9 @@ import sbt.nio.Keys.watchBeforeCommand
 import sbt.nio.Keys.watchOnTermination
 
 import scala.collection.immutable.ListSet
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.sys.process.{Process => ScalaProcess}
+import scala.sys.process.BasicIO
 import scala.sys.process.ProcessLogger
+import scala.sys.process.{Process => ScalaProcess}
 
 object ElectronPlugin extends AutoPlugin {
 
@@ -183,19 +182,13 @@ object ElectronPlugin extends AutoPlugin {
           val p = pb.start()
           val stdoutThread = new Thread() {
             override def run(): Unit = {
-              scala.io.Source
-                .fromInputStream(p.getInputStream)
-                .getLines
-                .foreach(msg => logger.info(msg))
+              BasicIO.processFully(logger.info(_))(p.getInputStream)
             }
           }
           stdoutThread.start()
           val stderrThread = new Thread() {
             override def run(): Unit = {
-              scala.io.Source
-                .fromInputStream(p.getErrorStream)
-                .getLines
-                .foreach(msg => logger.error(msg))
+              BasicIO.processFully(logger.error(_))(p.getErrorStream)
             }
           }
           stderrThread.start()
