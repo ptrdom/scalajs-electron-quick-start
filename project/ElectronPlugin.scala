@@ -35,7 +35,6 @@ object ElectronPlugin extends AutoPlugin {
         "Compiles main and renderer modules, copies output to target directory."
       )
     val electronStart = taskKey[Unit]("Runs `npm start` on target directory.")
-    val electronStop = taskKey[Unit]("Runs `npm start` on target directory.")
   }
 
   import autoImport._
