@@ -15,7 +15,7 @@ import sbt.nio.Keys.watchBeforeCommand
 import sbt.nio.Keys.watchOnTermination
 
 import scala.collection.immutable.ListSet
-`import scala.sys.process.ProcessLogger
+import scala.sys.process.ProcessLogger
 import scala.sys.process.{Process => ScalaProcess}
 
 object ElectronPlugin extends AutoPlugin {
