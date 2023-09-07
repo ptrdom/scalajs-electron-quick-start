@@ -7,7 +7,7 @@ lazy val `scalajs-electron-quick-start` = (project in file("."))
   .aggregate(app, main, preload, `node-shared`, renderer)
 
 def commonSettings = Seq(
-  scalaVersion := "2.13.8"
+  scalaVersion := "2.13.11"
 )
 
 def commonDomSettings = Seq(
