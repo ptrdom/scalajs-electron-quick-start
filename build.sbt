@@ -11,7 +11,7 @@ def commonSettings = Seq(
 )
 
 def commonDomSettings = Seq(
-  libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.2.0"
+  libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.0"
 )
 
 val app = (project in file("app"))
