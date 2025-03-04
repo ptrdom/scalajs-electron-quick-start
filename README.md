@@ -7,7 +7,7 @@
 > please check out following plugins:
 > 
 > - https://github.com/ptrdom/scalajs-esbuild?tab=readme-ov-file#electron-plugin
-> - (https://github.com/ptrdom/scalajs-vite?tab=readme-ov-file#electron
+> - https://github.com/ptrdom/scalajs-vite?tab=readme-ov-file#electron
 > 
 > Recommendation is to try out esbuild, because esbuild is faster than vite (rollup).
 
