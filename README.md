@@ -2,6 +2,15 @@
 
 **[electron-quick-start](https://github.com/electron/electron-quick-start) conversion to [Scala.js](https://www.scala-js.org/)**
 
+> :warning: This template is more of an experiment and does not provide the best workflows for developing
+> and building applications. If you need proper dev server implementation with hot reload and module bundler support,
+> please check out following plugins:
+> 
+> - https://github.com/ptrdom/scalajs-esbuild?tab=readme-ov-file#electron-plugin
+> - (https://github.com/ptrdom/scalajs-vite?tab=readme-ov-file#electron
+> 
+> Recommendation is to try out esbuild, because esbuild is faster than vite (rollup).
+
 ## How to run
 
 Requires `npm` to be installed in the system.
